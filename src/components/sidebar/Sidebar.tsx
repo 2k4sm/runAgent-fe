@@ -1,10 +1,12 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
 import { LogOut, Settings, PanelLeftClose } from 'lucide-react'
 import { NewChatButton } from './NewChatButton'
 import { ConversationList } from './ConversationList'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import {
@@ -20,6 +22,7 @@ import { useUIStore } from '@/stores/uiStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { cn } from '@/lib/utils'
 import { ROUTES } from '@/lib/constants'
+import type { Conversation } from '@/types'
 
 export function Sidebar() {
   const navigate = useNavigate()
@@ -27,10 +30,27 @@ export function Sidebar() {
   const sidebarOpen = useUIStore((s) => s.sidebarOpen)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const loadConversations = useConversationStore((s) => s.loadConversations)
+  const deleteConversation = useConversationStore((s) => s.deleteConversation)
+  const activeId = useConversationStore((s) => s.activeId)
+
+  // Dialog lives in the stable Sidebar — not in ConversationItem, which
+  // unmounts on delete and would tear the open dialog out mid-close.
+  const [pendingDelete, setPendingDelete] = useState<Conversation | null>(null)
 
   useEffect(() => {
     void loadConversations()
   }, [loadConversations])
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return
+    const wasActive = activeId === pendingDelete.id
+    try {
+      await deleteConversation(pendingDelete.id)
+      if (wasActive) navigate(ROUTES.CHAT)
+    } catch {
+      toast.error('Could not delete conversation')
+    }
+  }
 
   const email = user?.email ?? 'Account'
   const initials = email.slice(0, 2).toUpperCase()
@@ -55,7 +75,7 @@ export function Sidebar() {
       </div>
 
       <Separator />
-      <ConversationList />
+      <ConversationList onRequestDelete={setPendingDelete} />
       <Separator />
 
       <div className="flex items-center gap-2 p-3">
@@ -82,6 +102,18 @@ export function Sidebar() {
         </DropdownMenu>
         <ThemeToggle />
       </div>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null)
+        }}
+        title="Delete conversation?"
+        description="This conversation and its messages will be permanently removed."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDelete}
+      />
     </aside>
   )
 }

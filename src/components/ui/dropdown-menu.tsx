@@ -2,7 +2,11 @@ import * as React from 'react'
 import { Menu } from '@base-ui/react/menu'
 import { cn } from '@/lib/utils'
 
-export const DropdownMenu = Menu.Root
+/** Non-modal by default — a modal dropdown can leave the page stuck inert. */
+export function DropdownMenu(props: React.ComponentProps<typeof Menu.Root>) {
+  return <Menu.Root modal={false} {...props} />
+}
+
 export const DropdownMenuTrigger = Menu.Trigger
 
 interface ContentProps {

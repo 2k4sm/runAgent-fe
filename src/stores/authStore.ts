@@ -49,6 +49,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       void supabase.auth.signOut()
       set({ session: null, user: null, status: 'unauthenticated' })
     })
+
+    // Safety net: never trap the app on a blank loading screen if the auth
+    // client fails to deliver an initial session.
+    window.setTimeout(() => {
+      if (get().status === 'loading') {
+        set({ session: null, user: null, status: 'unauthenticated' })
+      }
+    }, 8000)
   },
 
   signIn: async (email, password) => {

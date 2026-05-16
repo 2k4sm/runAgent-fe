@@ -4,8 +4,13 @@ import { EmptyState } from '@/components/common/EmptyState'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useConversationStore } from '@/stores/conversationStore'
+import type { Conversation } from '@/types'
 
-export function ConversationList() {
+interface ConversationListProps {
+  onRequestDelete: (conversation: Conversation) => void
+}
+
+export function ConversationList({ onRequestDelete }: ConversationListProps) {
   const conversations = useConversationStore((s) => s.conversations)
   const activeId = useConversationStore((s) => s.activeId)
   const loading = useConversationStore((s) => s.loading)
@@ -34,7 +39,12 @@ export function ConversationList() {
     <ScrollArea className="flex-1">
       <div className="py-1">
         {conversations.map((c) => (
-          <ConversationItem key={c.id} conversation={c} active={c.id === activeId} />
+          <ConversationItem
+            key={c.id}
+            conversation={c}
+            active={c.id === activeId}
+            onRequestDelete={onRequestDelete}
+          />
         ))}
       </div>
     </ScrollArea>

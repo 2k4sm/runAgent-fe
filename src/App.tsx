@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
+import { InertRecovery } from '@/components/common/InertRecovery'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { AuthGuard, GuestGuard } from '@/components/layout/AuthGuard'
@@ -52,6 +53,7 @@ export default function App() {
         </Routes>
       </TooltipProvider>
       <Toaster />
+      <InertRecovery />
     </ErrorBoundary>
   )
 }
