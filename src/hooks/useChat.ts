@@ -5,41 +5,43 @@ import { useChatStore } from '@/stores/chatStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { chatService } from '@/services/chatService'
 import { conversationService } from '@/services/conversationService'
+import { fileService } from '@/services/fileService'
 import { readSSEStream } from './useSSE'
 import { ApiError } from '@/services/api'
 import { ROUTES } from '@/lib/constants'
-import type { Asset } from '@/types'
+import type { Asset, StagedFile } from '@/types'
 
-/** Builds lightweight Asset stand-ins for pending uploads so they render immediately. */
-function pendingAssets(files: File[]): Asset[] {
-  return files.map((f) => ({
-    id: crypto.randomUUID(),
+/** Builds an optimistic Asset for a staged file so it renders immediately. */
+function optimisticAsset(staged: StagedFile): Asset {
+  if (staged.asset) return staged.asset
+  return {
+    id: staged.assetId ?? crypto.randomUUID(),
     user_id: '',
     conversation_id: null,
     run_id: null,
     source: 'upload',
-    file_name: f.name,
-    file_type: f.type || 'application/octet-stream',
-    file_size: f.size,
+    file_name: staged.file.name,
+    file_type: staged.file.type || 'application/octet-stream',
+    file_size: staged.file.size,
     storage_path: '',
     file_url: '',
     created_at: new Date().toISOString(),
-  }))
+  }
 }
 
 /**
  * Orchestrates sending a message end to end:
- * ensure a conversation exists -> POST the message -> stream the response ->
- * reconcile against persisted state.
+ * ensure a conversation exists -> upload any not-yet-uploaded attachments ->
+ * POST the message -> stream the run -> reconcile against persisted state.
  */
 export function useChat() {
   const navigate = useNavigate()
   const abortRef = useRef<AbortController | null>(null)
 
   const send = useCallback(
-    async (content: string, files: File[] = []) => {
+    async (content: string, staged: StagedFile[] = []) => {
       const trimmed = content.trim()
-      if (!trimmed && files.length === 0) return
+      if (!trimmed && staged.length === 0) return
       if (useChatStore.getState().streaming) return
 
       const convStore = useConversationStore.getState()
@@ -54,7 +56,7 @@ export function useChat() {
           conversationId = created.id
           isNew = true
           convStore.selectConversation(conversationId)
-          chatStore.setMessages(conversationId, [])
+          chatStore.setEmpty(conversationId)
           navigate(ROUTES.CHAT_BY_ID(conversationId))
         } catch (err) {
           toast.error(err instanceof Error ? err.message : 'Could not start a conversation')
@@ -63,10 +65,29 @@ export function useChat() {
       }
 
       // 2. Optimistically render the user message and an empty assistant turn.
-      chatStore.appendUserMessage(conversationId, trimmed, pendingAssets(files))
+      chatStore.appendUserMessage(conversationId, trimmed, staged.map(optimisticAsset))
       chatStore.startAssistantMessage(conversationId)
 
-      // 3. POST the message.
+      // 3. Ensure every attachment is stored. Re-upload anything that did not
+      //    finish (or failed) on attach — abort the send if one still cannot
+      //    be stored, rather than silently dropping the file.
+      let attachmentIds: string[]
+      try {
+        attachmentIds = await Promise.all(
+          staged.map(async (s) => {
+            if (s.status === 'uploaded' && s.assetId) return s.assetId
+            const asset = await fileService.upload(s.file)
+            return asset.id
+          }),
+        )
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to upload an attachment'
+        toast.error(message)
+        useChatStore.getState().setStreamError(conversationId, message)
+        return
+      }
+
+      // 4. POST the message.
       const controller = new AbortController()
       abortRef.current = controller
       let response: Response
@@ -74,7 +95,7 @@ export function useChat() {
         response = await chatService.sendMessage({
           content: trimmed,
           conversationId,
-          attachments: files,
+          attachmentIds,
           signal: controller.signal,
         })
       } catch (err) {
@@ -89,7 +110,7 @@ export function useChat() {
         return
       }
 
-      // 4. Stream and apply events.
+      // 5. Stream and apply events.
       try {
         await readSSEStream(
           response,
@@ -107,10 +128,10 @@ export function useChat() {
         abortRef.current = null
       }
 
-      // 5. Reconcile against persisted state and refresh sidebar ordering.
+      // 6. Reconcile against persisted runs and refresh sidebar ordering.
       try {
-        const rows = await conversationService.getMessages(conversationId)
-        useChatStore.getState().setMessages(conversationId, rows)
+        const runs = await conversationService.getRuns(conversationId)
+        useChatStore.getState().setRuns(conversationId, runs)
       } catch {
         // Keep the optimistic stream if reconciliation fails.
       }

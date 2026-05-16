@@ -1,17 +1,20 @@
 import { useRef, useState } from 'react'
 import { Paperclip, Send, Square } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
 import { AttachmentPreview } from './AttachmentPreview'
 import { useChat } from '@/hooks/useChat'
 import { useChatStore } from '@/stores/chatStore'
+import { fileService } from '@/services/fileService'
+import type { StagedFile } from '@/types'
 
 /** Message composer: auto-growing textarea, file attachments, send/stop control. */
 export function ChatInput() {
   const { send, stop } = useChat()
   const streaming = useChatStore((s) => s.streaming)
   const [content, setContent] = useState('')
-  const [files, setFiles] = useState<File[]>([])
+  const [staged, setStaged] = useState<StagedFile[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -22,12 +25,45 @@ export function ChatInput() {
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`
   }
 
+  /** Patch one staged file in place by its localId. */
+  const patch = (localId: string, fields: Partial<StagedFile>) =>
+    setStaged((prev) => prev.map((s) => (s.localId === localId ? { ...s, ...fields } : s)))
+
+  /** Upload a staged file immediately via POST /files/upload. */
+  const uploadStaged = async (sf: StagedFile) => {
+    patch(sf.localId, { status: 'uploading' })
+    try {
+      const asset = await fileService.upload(sf.file)
+      patch(sf.localId, { status: 'uploaded', assetId: asset.id, asset })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Upload failed'
+      toast.error(`${sf.file.name}: ${message}`)
+      patch(sf.localId, { status: 'error', error: message })
+    }
+  }
+
+  const onSelectFiles = (picked: File[]) => {
+    if (picked.length === 0) return
+    const next: StagedFile[] = picked.map((file) => ({
+      localId: crypto.randomUUID(),
+      file,
+      status: 'pending',
+    }))
+    setStaged((prev) => [...prev, ...next])
+    // Store every file right away — the send button only enables once uploads
+    // finish. send() re-uploads anything still unstored as a safety net.
+    for (const sf of next) void uploadStaged(sf)
+  }
+
+  const uploading = staged.some((s) => s.status === 'uploading')
+  const hasUsable = staged.some((s) => s.status !== 'error')
+  const canSend = !streaming && !uploading && (Boolean(content.trim()) || hasUsable)
+
   const submit = () => {
-    if (streaming) return
-    if (!content.trim() && files.length === 0) return
-    void send(content, files)
+    if (!canSend) return
+    void send(content, staged)
     setContent('')
-    setFiles([])
+    setStaged([])
     requestAnimationFrame(resize)
   }
 
@@ -35,8 +71,8 @@ export function ChatInput() {
     <div className="border-border bg-background border-t">
       <div className="mx-auto w-full max-w-3xl p-3">
         <AttachmentPreview
-          files={files}
-          onRemove={(i) => setFiles(files.filter((_, n) => n !== i))}
+          files={staged}
+          onRemove={(localId) => setStaged((prev) => prev.filter((s) => s.localId !== localId))}
         />
 
         <div className="border-input bg-background flex items-end gap-2 border p-2">
@@ -46,7 +82,7 @@ export function ChatInput() {
             multiple
             className="hidden"
             onChange={(e) => {
-              setFiles((prev) => [...prev, ...Array.from(e.target.files ?? [])])
+              onSelectFiles(Array.from(e.target.files ?? []))
               e.target.value = ''
             }}
           />
@@ -95,7 +131,7 @@ export function ChatInput() {
               size="icon"
               className="size-8 shrink-0"
               onClick={submit}
-              disabled={!content.trim() && files.length === 0}
+              disabled={!canSend}
               aria-label="Send message"
             >
               <Send />
@@ -103,7 +139,7 @@ export function ChatInput() {
           )}
         </div>
         <p className="text-muted-foreground mt-1.5 text-center text-[0.7rem]">
-          Enter to send · Shift+Enter for a new line
+          {uploading ? 'Uploading attachments…' : 'Enter to send · Shift+Enter for a new line'}
         </p>
       </div>
     </div>

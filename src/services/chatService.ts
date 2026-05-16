@@ -5,40 +5,40 @@ import type { ApiErrorBody } from '@/types'
 export interface SendMessageParams {
   content: string
   conversationId: string
-  attachments?: File[]
+  /** Ids of assets already uploaded via fileService.upload. */
+  attachmentIds?: string[]
   signal?: AbortSignal
 }
 
 /**
  * Posts a chat message and returns the raw streaming Response.
  *
- * Uses `fetch` directly (not the JSON `api` wrapper) so the response body stays
- * an unconsumed SSE stream for the caller to read. Throws ApiError before any
- * streaming begins if the request is rejected (e.g. 429 rate limit).
+ * Attachments are uploaded separately beforehand; this request only carries
+ * their ids. Uses `fetch` directly (not the JSON `api` wrapper) so the
+ * response body stays an unconsumed SSE stream for the caller to read. Throws
+ * ApiError before any streaming begins if the request is rejected.
  */
 export const chatService = {
   async sendMessage({
     content,
     conversationId,
-    attachments,
+    attachmentIds,
     signal,
   }: SendMessageParams): Promise<Response> {
     const token = await getAuthToken()
-
-    const form = new FormData()
-    form.append('content', content)
-    form.append('conversation_id', conversationId)
-    for (const file of attachments ?? []) {
-      form.append('attachments', file)
-    }
 
     const res = await fetch(`${API_BASE_URL}/chat/message`, {
       method: 'POST',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        'Content-Type': 'application/json',
         Accept: 'text/event-stream',
       },
-      body: form,
+      body: JSON.stringify({
+        content,
+        conversation_id: conversationId,
+        attachment_ids: attachmentIds ?? [],
+      }),
       signal,
     })
 

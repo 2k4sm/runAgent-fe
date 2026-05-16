@@ -1,7 +1,7 @@
 import { apiGet, apiPost, apiDelete } from './api'
-import type { Conversation, PersistedMessage } from '@/types'
+import type { Conversation, PersistedRun } from '@/types'
 
-/** CRUD calls for conversations and their persisted messages. */
+/** CRUD calls for conversations and their persisted runs. */
 export const conversationService = {
   create(title?: string): Promise<Conversation> {
     return apiPost<Conversation>('/conversations', { title: title || 'New conversation' })
@@ -15,8 +15,8 @@ export const conversationService = {
     return apiGet<Conversation>(`/conversations/${id}`)
   },
 
-  getMessages(id: string): Promise<PersistedMessage[]> {
-    return apiGet<PersistedMessage[]>(`/conversations/${id}/messages`)
+  getRuns(id: string): Promise<PersistedRun[]> {
+    return apiGet<PersistedRun[]>(`/conversations/${id}/runs`)
   },
 
   remove(id: string): Promise<{ status: string }> {

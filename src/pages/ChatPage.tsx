@@ -24,9 +24,9 @@ export function ChatPage() {
     let cancelled = false
     setLoading(true)
     conversationService
-      .getMessages(id)
-      .then((rows) => {
-        if (!cancelled) useChatStore.getState().setMessages(id, rows)
+      .getRuns(id)
+      .then((runs) => {
+        if (!cancelled) useChatStore.getState().setRuns(id, runs)
       })
       .catch(() => {
         if (!cancelled) toast.error('Could not load this conversation')
