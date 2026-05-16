@@ -25,7 +25,7 @@ export function ScrollArea({
         onScroll={onViewportScroll}
         className={cn('size-full overscroll-contain', viewportClassName)}
       >
-        <BaseScrollArea.Content>{children}</BaseScrollArea.Content>
+        <BaseScrollArea.Content className="min-w-0!">{children}</BaseScrollArea.Content>
       </BaseScrollArea.Viewport>
       <BaseScrollArea.Scrollbar
         orientation="vertical"

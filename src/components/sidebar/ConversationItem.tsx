@@ -29,7 +29,7 @@ export function ConversationItem({ conversation, active, onRequestDelete }: Conv
   return (
     <div
       className={cn(
-        'group flex items-center gap-1 px-2 py-2 text-sm transition-colors',
+        'group border-sidebar-border/60 flex items-center gap-1 border-b px-2 py-2 text-sm transition-colors last:border-b-0',
         active ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'hover:bg-sidebar-accent/60',
       )}
     >
