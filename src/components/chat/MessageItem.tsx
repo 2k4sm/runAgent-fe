@@ -5,6 +5,7 @@ import { ThoughtBlock } from './ThoughtBlock'
 import { ToolCallBlock } from './ToolCallBlock'
 import { HandoffDivider } from './HandoffDivider'
 import { StreamingIndicator } from './StreamingIndicator'
+import { StreamingCursor } from './StreamingCursor'
 import { AttachmentList } from './AttachmentList'
 import { GeneratedFileCard } from './GeneratedFileCard'
 import { UsageFooter } from './UsageFooter'
@@ -59,7 +60,10 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
         ))}
 
         {message.content ? (
-          <Markdown content={message.content} />
+          <>
+            <Markdown content={message.content} />
+            {streaming ? <StreamingCursor /> : null}
+          </>
         ) : streaming && empty ? (
           <StreamingIndicator />
         ) : null}
