@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import { MessageList } from './MessageList'
+import { ChatSkeleton } from './ChatSkeleton'
 import { ChatInput } from './ChatInput'
 import { Header } from '@/components/layout/Header'
 import { useChatStore } from '@/stores/chatStore'
@@ -9,10 +10,11 @@ import type { ChatMessage } from '@/types'
 interface ChatWindowProps {
   conversationId: string | null
   messages: ChatMessage[]
+  loading?: boolean
 }
 
 /** Scrollable message area + composer, with sticky-to-bottom auto-scroll. */
-export function ChatWindow({ conversationId, messages }: ChatWindowProps) {
+export function ChatWindow({ conversationId, messages, loading }: ChatWindowProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const pinnedRef = useRef(true)
   const streaming = useChatStore((s) => s.streaming)
@@ -49,7 +51,7 @@ export function ChatWindow({ conversationId, messages }: ChatWindowProps) {
     <div className="flex h-full flex-col">
       <Header title={title} />
       <div ref={scrollRef} onScroll={onScroll} className="flex-1 overflow-y-auto">
-        <MessageList messages={messages} />
+        {loading ? <ChatSkeleton /> : <MessageList messages={messages} />}
       </div>
       <ChatInput />
     </div>

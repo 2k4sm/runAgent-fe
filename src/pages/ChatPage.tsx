@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { ChatWindow } from '@/components/chat/ChatWindow'
-import { LoadingSpinner } from '@/components/common/LoadingSpinner'
 import { useChatStore } from '@/stores/chatStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { conversationService } from '@/services/conversationService'
@@ -40,9 +39,11 @@ export function ChatPage() {
     }
   }, [id, selectConversation])
 
-  if (id && loading && messages.length === 0) {
-    return <LoadingSpinner fullPage />
-  }
-
-  return <ChatWindow conversationId={id ?? null} messages={messages} />
+  return (
+    <ChatWindow
+      conversationId={id ?? null}
+      messages={messages}
+      loading={Boolean(id) && loading && messages.length === 0}
+    />
+  )
 }
