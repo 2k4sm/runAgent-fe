@@ -1,11 +1,13 @@
 import { useRef, useState } from 'react'
-import { Paperclip, Send, Square } from 'lucide-react'
+import { Brain, Paperclip, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
+import { cn } from '@/lib/utils'
 import { AttachmentPreview } from './AttachmentPreview'
 import { useChat } from '@/hooks/useChat'
 import { useChatStore } from '@/stores/chatStore'
+import { useUIStore } from '@/stores/uiStore'
 import { fileService } from '@/services/fileService'
 import type { StagedFile } from '@/types'
 
@@ -13,6 +15,8 @@ import type { StagedFile } from '@/types'
 export function ChatInput() {
   const { send, stop } = useChat()
   const streaming = useChatStore((s) => s.streaming)
+  const reasoningEnabled = useUIStore((s) => s.reasoningEnabled)
+  const toggleReasoning = useUIStore((s) => s.toggleReasoning)
   const [content, setContent] = useState('')
   const [staged, setStaged] = useState<StagedFile[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -95,6 +99,19 @@ export function ChatInput() {
               aria-label="Attach files"
             >
               <Paperclip />
+            </Button>
+          </Tooltip>
+
+          <Tooltip content={reasoningEnabled ? 'Reasoning on' : 'Reasoning off'}>
+            <Button
+              variant={reasoningEnabled ? 'secondary' : 'ghost'}
+              size="icon"
+              className={cn('size-8 shrink-0', reasoningEnabled && 'text-primary')}
+              onClick={toggleReasoning}
+              aria-label="Toggle reasoning"
+              aria-pressed={reasoningEnabled}
+            >
+              <Brain />
             </Button>
           </Tooltip>
 

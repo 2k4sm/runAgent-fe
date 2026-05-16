@@ -2,6 +2,7 @@ import { AlertCircle } from 'lucide-react'
 import { Markdown } from '@/components/common/Markdown'
 import { AgentBadge } from './AgentBadge'
 import { ThoughtBlock } from './ThoughtBlock'
+import { ReasoningBlock } from './ReasoningBlock'
 import { ToolCallBlock } from './ToolCallBlock'
 import { HandoffDivider } from './HandoffDivider'
 import { StreamingIndicator } from './StreamingIndicator'
@@ -12,8 +13,10 @@ import { UsageFooter } from './UsageFooter'
 import { cn } from '@/lib/utils'
 import type { ChatItem, ChatMessage } from '@/types'
 
-function ItemRenderer({ item }: { item: ChatItem }) {
+function ItemRenderer({ item, streaming }: { item: ChatItem; streaming: boolean }) {
   switch (item.kind) {
+    case 'reasoning':
+      return <ReasoningBlock item={item} streaming={streaming} />
     case 'thought':
       return <ThoughtBlock item={item} />
     case 'tool_call':
@@ -56,7 +59,7 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
 
       <div className="text-sm">
         {message.items.map((item) => (
-          <ItemRenderer key={item.id} item={item} />
+          <ItemRenderer key={item.id} item={item} streaming={streaming} />
         ))}
 
         {message.content ? (

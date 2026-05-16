@@ -7,6 +7,8 @@ export interface SendMessageParams {
   conversationId: string
   /** Ids of assets already uploaded via fileService.upload. */
   attachmentIds?: string[]
+  /** Request the model to stream its reasoning/thinking tokens. */
+  reasoning?: boolean
   signal?: AbortSignal
 }
 
@@ -23,6 +25,7 @@ export const chatService = {
     content,
     conversationId,
     attachmentIds,
+    reasoning,
     signal,
   }: SendMessageParams): Promise<Response> {
     const token = await getAuthToken()
@@ -38,6 +41,7 @@ export const chatService = {
         content,
         conversation_id: conversationId,
         attachment_ids: attachmentIds ?? [],
+        reasoning: reasoning ?? false,
       }),
       signal,
     })

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useChatStore } from '@/stores/chatStore'
 import { useConversationStore } from '@/stores/conversationStore'
+import { useUIStore } from '@/stores/uiStore'
 import { chatService } from '@/services/chatService'
 import { conversationService } from '@/services/conversationService'
 import { fileService } from '@/services/fileService'
@@ -99,6 +100,7 @@ export function useChat() {
           content: trimmed,
           conversationId,
           attachmentIds,
+          reasoning: useUIStore.getState().reasoningEnabled,
           signal: controller.signal,
         })
       } catch (err) {

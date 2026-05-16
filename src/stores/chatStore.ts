@@ -50,6 +50,26 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
     case 'chunk':
       return { ...m, agent: agent || m.agent, content: m.content + (content ?? '') }
 
+    case 'reasoning': {
+      const items = m.items.slice()
+      const last = items[items.length - 1]
+      // Merge consecutive reasoning deltas from the same agent into one block.
+      if (last && last.kind === 'reasoning' && last.agent === (agent ?? undefined)) {
+        items[items.length - 1] = {
+          ...last,
+          content: last.content + (content ?? ''),
+        }
+      } else {
+        items.push({
+          id: uid(),
+          kind: 'reasoning',
+          agent: agent ?? undefined,
+          content: content ?? '',
+        })
+      }
+      return { ...m, items }
+    }
+
     case 'thought': {
       const items = m.items.slice()
       const last = items[items.length - 1]

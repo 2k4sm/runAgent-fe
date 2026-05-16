@@ -1,6 +1,7 @@
 /** Streaming event types emitted by POST /api/v1/chat/message. */
 export type SSEEventType =
   | 'chunk'
+  | 'reasoning'
   | 'thought'
   | 'tool_call'
   | 'tool_result'

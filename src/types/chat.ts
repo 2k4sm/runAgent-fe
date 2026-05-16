@@ -4,7 +4,13 @@ import type { UsageMeta } from './sse'
 export type ChatRole = 'user' | 'assistant'
 
 /** Kinds of inline items that interleave within an assistant turn. */
-export type ChatItemKind = 'thought' | 'tool_call' | 'tool_result' | 'handoff' | 'error'
+export type ChatItemKind =
+  | 'reasoning'
+  | 'thought'
+  | 'tool_call'
+  | 'tool_result'
+  | 'handoff'
+  | 'error'
 
 /** A reasoning step, tool call, handoff, or error rendered inside an assistant message. */
 export interface ChatItem {
