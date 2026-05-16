@@ -7,7 +7,6 @@ import { ConversationList } from './ConversationList'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { Separator } from '@/components/ui/separator'
 import { ThemeToggle } from '@/components/common/ThemeToggle'
 import {
   DropdownMenu,
@@ -74,9 +73,7 @@ export function Sidebar() {
         <NewChatButton />
       </div>
 
-      <Separator />
       <ConversationList onRequestDelete={setPendingDelete} />
-      <Separator />
 
       <div className="flex items-center gap-2 p-3">
         <DropdownMenu>

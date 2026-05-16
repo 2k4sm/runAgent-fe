@@ -49,8 +49,7 @@ export function ConversationItem({ conversation, active, onRequestDelete }: Conv
         <DropdownMenuTrigger
           className={cn(
             'text-muted-foreground inline-flex size-7 shrink-0 items-center justify-center',
-            'hover:text-foreground opacity-0 transition-opacity group-hover:opacity-100',
-            'data-[popup-open]:opacity-100',
+            'hover:text-foreground transition-colors',
           )}
           aria-label="Conversation options"
         >

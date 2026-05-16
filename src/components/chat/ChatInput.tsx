@@ -68,7 +68,7 @@ export function ChatInput() {
   }
 
   return (
-    <div className="border-border bg-background border-t">
+    <div className="bg-background">
       <div className="mx-auto w-full max-w-3xl p-3">
         <AttachmentPreview
           files={staged}

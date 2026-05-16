@@ -52,7 +52,10 @@ export function useChat() {
       let isNew = false
       if (!conversationId) {
         try {
-          const created = await convStore.createConversation()
+          // Name the conversation after the opening query (trimmed to a
+          // sensible length); fall back to the default for attachment-only sends.
+          const title = trimmed ? trimmed.replace(/\s+/g, ' ').slice(0, 60) : undefined
+          const created = await convStore.createConversation(title)
           conversationId = created.id
           isNew = true
           convStore.selectConversation(conversationId)

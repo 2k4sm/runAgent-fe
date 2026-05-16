@@ -20,7 +20,7 @@ export function MessageList({ messages }: MessageListProps) {
   }
 
   return (
-    <div className="divide-border/60 mx-auto w-full max-w-3xl divide-y">
+    <div className="mx-auto flex w-full max-w-3xl flex-col py-2">
       {messages.map((message) => (
         <MessageItem key={message.id} message={message} />
       ))}

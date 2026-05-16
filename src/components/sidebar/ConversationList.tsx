@@ -17,7 +17,7 @@ export function ConversationList({ onRequestDelete }: ConversationListProps) {
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="space-y-2 p-2">
+      <div className="flex-1 space-y-2 p-2">
         {Array.from({ length: 6 }).map((_, i) => (
           <Skeleton key={i} className="h-10 w-full" />
         ))}
@@ -31,6 +31,7 @@ export function ConversationList({ onRequestDelete }: ConversationListProps) {
         icon={MessagesSquare}
         title="No conversations yet"
         description="Start a new chat to begin."
+        className="flex-1"
       />
     )
   }
