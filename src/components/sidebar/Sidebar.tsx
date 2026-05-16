@@ -58,8 +58,13 @@ export function Sidebar() {
     <aside
       className={cn(
         'border-sidebar-border bg-sidebar text-sidebar-foreground flex h-full flex-col border-r',
-        'transition-[width] duration-200',
-        sidebarOpen ? 'w-72' : 'w-0 overflow-hidden',
+        // Mobile: fixed overlay that slides in over the page content.
+        // Kept below z-50 so portalled menus/dialogs layer above it.
+        'fixed inset-y-0 left-0 z-40 w-72 transition-transform duration-200',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+        // Desktop: in-flow column that collapses by width.
+        'md:static md:z-auto md:translate-x-0 md:transition-[width]',
+        sidebarOpen ? 'md:w-72' : 'md:w-0 md:overflow-hidden',
       )}
     >
       <div className="flex items-center justify-between px-3 py-3">

@@ -25,10 +25,12 @@ export function DropdownMenuContent({
 }: ContentProps) {
   return (
     <Menu.Portal>
-      <Menu.Positioner side={side} align={align} sideOffset={6}>
+      {/* z-index must sit on the positioned element (the Positioner is
+          `fixed`); on `Menu.Popup` it is `static` and therefore inert. */}
+      <Menu.Positioner side={side} align={align} sideOffset={6} className="z-50">
         <Menu.Popup
           className={cn(
-            'border-border bg-popover text-popover-foreground z-50 min-w-[10rem] border p-1 shadow-md',
+            'border-border bg-popover text-popover-foreground min-w-[10rem] border p-1 shadow-md',
             'outline-none',
             className,
           )}
