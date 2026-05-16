@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { LogOut, Settings, PanelLeftClose } from 'lucide-react'
 import { NewChatButton } from './NewChatButton'
+import { LogoWordmark } from '@/components/common/Logo'
 import { ConversationList } from './ConversationList'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -68,7 +69,7 @@ export function Sidebar() {
       )}
     >
       <div className="flex items-center justify-between px-3 py-3">
-        <span className="text-sm font-semibold tracking-tight">runAgent</span>
+        <LogoWordmark markClassName="size-6" />
         <Button variant="ghost" size="icon" onClick={toggleSidebar} aria-label="Collapse sidebar">
           <PanelLeftClose />
         </Button>
