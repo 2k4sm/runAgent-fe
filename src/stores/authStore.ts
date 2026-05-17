@@ -28,20 +28,39 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().initialized) return
     set({ initialized: true })
 
-    // React to the resolved session and all future auth changes.
-    supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session) {
-        set({ session, status: 'authenticated' })
+    let fetchInFlight = false
+
+    // Verify identity against the backend, deferred out of the auth callback
+    // (running async Supabase calls inside it risks a lock deadlock) and deduped
+    // so a token refresh or tab-focus re-emit never refetches /auth/me.
+    const verifyUser = (session: Session) => {
+      const userId = session.user.id
+      if (get().user?.id === userId || fetchInFlight) return
+      fetchInFlight = true
+      setTimeout(async () => {
         try {
           const user = await authService.fetchMe()
-          set({ user })
+          if (get().session?.user.id === userId) set({ user })
         } catch {
           // Backend rejected the token — treat as signed out.
-          set({ session: null, user: null, status: 'unauthenticated' })
+          if (get().session?.user.id === userId) {
+            set({ session: null, user: null, status: 'unauthenticated' })
+          }
+        } finally {
+          fetchInFlight = false
         }
-      } else {
+      }, 0)
+    }
+
+    // React to the resolved session and all future auth changes. /auth/me is
+    // fetched only on a genuine sign-in — not on every TOKEN_REFRESHED.
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
         set({ session: null, user: null, status: 'unauthenticated' })
+        return
       }
+      set({ session, status: 'authenticated' })
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') verifyUser(session)
     })
 
     // The API layer dispatches this when a 401 cannot be recovered.
