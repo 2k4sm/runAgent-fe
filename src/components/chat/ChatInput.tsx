@@ -11,6 +11,11 @@ import { useUIStore } from '@/stores/uiStore'
 import { fileService } from '@/services/fileService'
 import type { StagedFile } from '@/types'
 
+/** Attachment limits: at most 5 files, each up to 15MB. */
+const MAX_FILES = 5
+const MAX_FILE_MB = 15
+const MAX_FILE_BYTES = MAX_FILE_MB * 1024 * 1024
+
 /** Message composer: auto-growing textarea, file attachments, send/stop control. */
 export function ChatInput() {
   const { send, stop } = useChat()
@@ -48,7 +53,27 @@ export function ChatInput() {
 
   const onSelectFiles = (picked: File[]) => {
     if (picked.length === 0) return
-    const next: StagedFile[] = picked.map((file) => ({
+
+    // Reject files over the per-file size limit.
+    const tooLarge = picked.filter((f) => f.size > MAX_FILE_BYTES)
+    for (const f of tooLarge) {
+      toast.error(`${f.name}: exceeds the ${MAX_FILE_MB}MB limit`)
+    }
+    let accepted = picked.filter((f) => f.size <= MAX_FILE_BYTES)
+
+    // Cap the total number of attachments.
+    const remainingSlots = MAX_FILES - staged.length
+    if (remainingSlots <= 0) {
+      toast.error(`You can attach at most ${MAX_FILES} files`)
+      return
+    }
+    if (accepted.length > remainingSlots) {
+      toast.error(`You can attach at most ${MAX_FILES} files`)
+      accepted = accepted.slice(0, remainingSlots)
+    }
+    if (accepted.length === 0) return
+
+    const next: StagedFile[] = accepted.map((file) => ({
       localId: crypto.randomUUID(),
       file,
       status: 'pending',
