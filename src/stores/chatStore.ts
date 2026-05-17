@@ -39,6 +39,45 @@ function attachmentToAsset(a: TimelineAttachment, source = 'upload'): Asset {
 }
 
 /**
+ * If a tool result is a generated-file JSON (`download_url` + metadata),
+ * returns `generatedAssets` with that file merged in (deduped by id);
+ * otherwise returns the existing list unchanged.
+ */
+function mergeGeneratedAsset(
+  existing: Asset[] | undefined,
+  content: string | null | undefined,
+): Asset[] | undefined {
+  if (!content) return existing
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    return existing
+  }
+  if (!parsed || typeof parsed !== 'object') return existing
+  const data = parsed as Record<string, unknown>
+  const url = data.download_url
+  if (typeof url !== 'string' || !url) return existing
+
+  const asset: Asset = {
+    id: typeof data.asset_id === 'string' && data.asset_id ? data.asset_id : url,
+    user_id: '',
+    conversation_id: null,
+    run_id: null,
+    source: 'generated',
+    file_name: typeof data.filename === 'string' ? data.filename : 'document',
+    file_type: typeof data.file_type === 'string' ? data.file_type : '',
+    file_size: typeof data.file_size === 'number' ? data.file_size : 0,
+    storage_path: '',
+    file_url: url,
+    created_at: now(),
+  }
+  const current = existing ?? []
+  if (current.some((a) => a.id === asset.id)) return existing
+  return [...current, asset]
+}
+
+/**
  * Applies one event to an assistant message, returning the updated copy.
  * Shared by the live stream (`applySSEEvent`) and run replay (`mapRuns`) so
  * both reconstruct thoughts, tool calls and handoffs identically.
@@ -112,13 +151,16 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
 
     case 'tool_result': {
       const meta = (metadata ?? {}) as Partial<ToolResultMeta>
+      // A file-producing tool result carries the generated asset as JSON —
+      // surface it as a download chip immediately, live from the stream.
+      const generatedAssets = mergeGeneratedAsset(m.generatedAssets, content)
       const items = m.items.slice()
       // Match the most recent unresolved tool_call with the same tool name.
       for (let i = items.length - 1; i >= 0; i--) {
         const it = items[i]
         if (it.kind === 'tool_call' && !it.resolved && it.toolName === meta.tool_name) {
           items[i] = { ...it, resolved: true, result: content ?? '' }
-          return { ...m, items }
+          return { ...m, items, generatedAssets }
         }
       }
       // No matching call — render the result standalone.
@@ -130,7 +172,7 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
         metadata: metadata ?? undefined,
         toolName: meta.tool_name,
       })
-      return { ...m, items }
+      return { ...m, items, generatedAssets }
     }
 
     case 'handoff':
@@ -226,15 +268,12 @@ function mapRuns(runs: PersistedRun[]): ChatMessage[] {
         })
         assistant = null
       } else if (entry.kind === 'message' && entry.role === 'assistant') {
+        // Generated-file chips are reconstructed from the replayed `tool_result`
+        // events below (same path as the live stream), so `...m` carries them.
         updateAssistant((m) => ({
           ...m,
           agent: entry.agent ?? m.agent,
           content: entry.content ?? m.content,
-          // Files the agents generated are embedded on the final assistant
-          // message and render as download chips.
-          generatedAssets: entry.files?.length
-            ? entry.files.map((f) => attachmentToAsset(f, 'generated'))
-            : m.generatedAssets,
           status: m.status === 'error' ? 'error' : 'complete',
         }))
       } else if (entry.kind === 'event' && entry.type) {

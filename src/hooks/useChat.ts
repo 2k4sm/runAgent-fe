@@ -5,7 +5,6 @@ import { useChatStore } from '@/stores/chatStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useUIStore } from '@/stores/uiStore'
 import { chatService } from '@/services/chatService'
-import { conversationService } from '@/services/conversationService'
 import { fileService } from '@/services/fileService'
 import { readSSEStream } from './useSSE'
 import { ApiError } from '@/services/api'
@@ -133,13 +132,10 @@ export function useChat() {
         abortRef.current = null
       }
 
-      // 6. Reconcile against persisted runs and refresh sidebar ordering.
-      try {
-        const runs = await conversationService.getRuns(conversationId)
-        useChatStore.getState().setRuns(conversationId, runs)
-      } catch {
-        // Keep the optimistic stream if reconciliation fails.
-      }
+      // 6. Refresh sidebar ordering. Runs are NOT refetched here — the
+      //    SSE-built messages stay in the store and the next turn appends to
+      //    them. Persisted runs are loaded only on first opening a
+      //    conversation (see ChatPage).
       if (isNew) {
         void useConversationStore.getState().loadConversations()
       } else {
