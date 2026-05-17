@@ -22,13 +22,13 @@ interface EventLike {
 }
 
 /** Promotes a trimmed timeline attachment into a full Asset for rendering. */
-function attachmentToAsset(a: TimelineAttachment): Asset {
+function attachmentToAsset(a: TimelineAttachment, source = 'upload'): Asset {
   return {
     id: a.id,
     user_id: '',
     conversation_id: null,
     run_id: null,
-    source: 'upload',
+    source,
     file_name: a.file_name,
     file_type: a.file_type,
     file_size: a.file_size,
@@ -219,7 +219,7 @@ function mapRuns(runs: PersistedRun[]): ChatMessage[] {
           role: 'user',
           content: entry.content ?? '',
           items: [],
-          attachments: (entry.attachments ?? []).map(attachmentToAsset),
+          attachments: (entry.attachments ?? []).map((a) => attachmentToAsset(a)),
           status: 'complete',
           runId: run.id,
           createdAt: entry.ts,
@@ -230,6 +230,11 @@ function mapRuns(runs: PersistedRun[]): ChatMessage[] {
           ...m,
           agent: entry.agent ?? m.agent,
           content: entry.content ?? m.content,
+          // Files the agents generated are embedded on the final assistant
+          // message and render as download chips.
+          generatedAssets: entry.files?.length
+            ? entry.files.map((f) => attachmentToAsset(f, 'generated'))
+            : m.generatedAssets,
           status: m.status === 'error' ? 'error' : 'complete',
         }))
       } else if (entry.kind === 'event' && entry.type) {

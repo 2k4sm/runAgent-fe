@@ -8,7 +8,6 @@ import { HandoffDivider } from './HandoffDivider'
 import { StreamingIndicator } from './StreamingIndicator'
 import { StreamingCursor } from './StreamingCursor'
 import { AttachmentList } from './AttachmentList'
-import { GeneratedFileCard } from './GeneratedFileCard'
 import { UsageFooter } from './UsageFooter'
 import { cn } from '@/lib/utils'
 import type { ChatItem, ChatMessage } from '@/types'
@@ -73,11 +72,7 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
       </div>
 
       {message.generatedAssets?.length ? (
-        <div className="mt-2 space-y-1.5">
-          {message.generatedAssets.map((asset) => (
-            <GeneratedFileCard key={asset.id} asset={asset} />
-          ))}
-        </div>
+        <AttachmentList attachments={message.generatedAssets} />
       ) : null}
 
       {message.usage ? <UsageFooter usage={message.usage} /> : null}
