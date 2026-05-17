@@ -90,6 +90,24 @@ export function ChatInput() {
               e.target.value = ''
             }}
           />
+          <textarea
+            ref={textareaRef}
+            value={content}
+            rows={1}
+            placeholder="Send a message…"
+            className="placeholder:text-muted-foreground max-h-[200px] flex-1 resize-none bg-transparent py-1.5 text-sm outline-none"
+            onChange={(e) => {
+              setContent(e.target.value)
+              resize()
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                submit()
+              }
+            }}
+          />
+
           <Tooltip content="Attach files">
             <Button
               variant="ghost"
@@ -114,24 +132,6 @@ export function ChatInput() {
               <Brain />
             </Button>
           </Tooltip>
-
-          <textarea
-            ref={textareaRef}
-            value={content}
-            rows={1}
-            placeholder="Send a message…"
-            className="placeholder:text-muted-foreground max-h-[200px] flex-1 resize-none bg-transparent py-1.5 text-sm outline-none"
-            onChange={(e) => {
-              setContent(e.target.value)
-              resize()
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                submit()
-              }
-            }}
-          />
 
           {streaming ? (
             <Button

@@ -8,7 +8,6 @@ import { ConversationList } from './ConversationList'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import { ThemeToggle } from '@/components/common/ThemeToggle'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,7 +102,6 @@ export function Sidebar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <ThemeToggle />
       </div>
 
       <ConfirmDialog
