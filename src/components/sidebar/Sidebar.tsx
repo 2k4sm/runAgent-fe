@@ -1,22 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { LogOut, Settings, PanelLeftClose } from 'lucide-react'
+import { PanelLeftClose } from 'lucide-react'
 import { NewChatButton } from './NewChatButton'
 import { LogoWordmark } from '@/components/common/Logo'
 import { ConversationList } from './ConversationList'
-import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/hooks/useAuth'
 import { useUIStore } from '@/stores/uiStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { cn } from '@/lib/utils'
@@ -25,7 +15,6 @@ import type { Conversation } from '@/types'
 
 export function Sidebar() {
   const navigate = useNavigate()
-  const { user, signOut } = useAuth()
   const sidebarOpen = useUIStore((s) => s.sidebarOpen)
   const toggleSidebar = useUIStore((s) => s.toggleSidebar)
   const loadConversations = useConversationStore((s) => s.loadConversations)
@@ -50,9 +39,6 @@ export function Sidebar() {
       toast.error('Could not delete conversation')
     }
   }
-
-  const email = user?.email ?? 'Account'
-  const initials = email.slice(0, 2).toUpperCase()
 
   return (
     <aside
@@ -79,30 +65,6 @@ export function Sidebar() {
       </div>
 
       <ConversationList onRequestDelete={setPendingDelete} />
-
-      <div className="flex items-center gap-2 p-3">
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className="flex min-w-0 flex-1 items-center gap-2 text-left"
-            aria-label="Account menu"
-          >
-            <Avatar fallback={initials} />
-            <span className="min-w-0 flex-1 truncate text-sm">{email}</span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="start">
-            <DropdownMenuLabel>{email}</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate(ROUTES.SETTINGS)}>
-              <Settings className="size-4" />
-              Settings
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => void signOut()}>
-              <LogOut className="size-4" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
 
       <ConfirmDialog
         open={pendingDelete !== null}
