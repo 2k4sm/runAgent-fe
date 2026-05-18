@@ -6,6 +6,7 @@ import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { AttachmentPreview } from './AttachmentPreview'
 import { useChat } from '@/hooks/useChat'
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice'
 import { useChatStore } from '@/stores/chatStore'
 import { useUIStore } from '@/stores/uiStore'
 import { fileService } from '@/services/fileService'
@@ -27,6 +28,9 @@ export function ChatInput() {
   const [staged, setStaged] = useState<StagedFile[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  // On touch devices Enter inserts a newline; the message is sent only by
+  // tapping the send button. Desktop keeps Enter-to-send.
+  const isTouch = useIsTouchDevice()
 
   const resize = () => {
     const el = textareaRef.current
@@ -127,7 +131,7 @@ export function ChatInput() {
               resize()
             }}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter' && !e.shiftKey && !isTouch) {
                 e.preventDefault()
                 submit()
               }
@@ -194,7 +198,11 @@ export function ChatInput() {
           )}
         </div>
         <p className="text-muted-foreground mt-1.5 text-center text-[0.7rem]">
-          {uploading ? 'Uploading attachments…' : 'Enter to send · Shift+Enter for a new line'}
+          {uploading
+            ? 'Uploading attachments…'
+            : isTouch
+              ? 'Tap send to send your message'
+              : 'Enter to send · Shift+Enter for a new line'}
         </p>
       </div>
     </div>

@@ -60,9 +60,6 @@ function ServerRow({
             <span className="truncate text-sm font-medium">{server.name}</span>
           </div>
           <p className="text-muted-foreground mt-0.5 truncate text-xs">{server.url}</p>
-          {server.description ? (
-            <p className="text-muted-foreground mt-0.5 truncate text-xs">{server.description}</p>
-          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <StatusBadge status={server.status} />
