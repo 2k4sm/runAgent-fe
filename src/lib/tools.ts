@@ -41,16 +41,16 @@ function prettifyName(name: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-export interface ToolMeta {
-  /** Fallback label, used when the model did not provide a `task_name`. */
+interface ToolMeta {
+  /** Fallback label, used when the model did not provide a `task_summary`. */
   label: string
   icon: LucideIcon
 }
 
 /**
- * Resolves display metadata for a tool. The primary heading/summary now come
- * from the model-provided `task_name`/`task_summary` arguments; this supplies
- * the icon and a fallback label for older runs that lack those args.
+ * Resolves display metadata for a tool. The primary heading comes from the
+ * model-provided `task_summary` argument; this supplies the icon and a
+ * fallback label for older runs that lack that arg.
  */
 export function toolMeta(toolName: string | undefined): ToolMeta {
   const def = toolName ? TOOL_DEFS[toolName] : undefined

@@ -32,8 +32,7 @@ export interface MCPHeaderInput {
 }
 
 export interface MCPServerCreateInput {
-  name: string
-  description?: string
+  // Name and description are derived automatically from the MCP server.
   url: string
   auth_type: MCPAuthType
   headers?: MCPHeaderInput[]

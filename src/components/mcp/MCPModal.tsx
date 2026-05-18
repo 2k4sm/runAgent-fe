@@ -129,8 +129,6 @@ const AUTH_TYPES: { value: MCPAuthType; label: string }[] = [
 /** The "add a server" form. */
 function AddServerForm({ onCancel }: { onCancel: () => void }) {
   const { addServer, startOAuth } = useMCPStore()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
   const [url, setUrl] = useState('')
   const [authType, setAuthType] = useState<MCPAuthType>('none')
   const [headers, setHeaders] = useState<MCPHeaderInput[]>([{ key: '', value: '' }])
@@ -142,16 +140,14 @@ function AddServerForm({ onCancel }: { onCancel: () => void }) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name.trim() || !url.trim()) {
-      setError('Name and URL are required.')
+    if (!url.trim()) {
+      setError('Server URL is required.')
       return
     }
     setError(null)
     setSubmitting(true)
     try {
       const server = await addServer({
-        name: name.trim(),
-        description: description.trim() || undefined,
         url: url.trim(),
         auth_type: authType,
         headers: authType === 'header' ? headers.filter((h) => h.key.trim()) : undefined,
@@ -179,30 +175,6 @@ function AddServerForm({ onCancel }: { onCancel: () => void }) {
       >
         <ArrowLeft className="size-3.5" /> Back
       </button>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium" htmlFor="mcp-name">
-          Name
-        </label>
-        <Input
-          id="mcp-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="e.g. GitHub"
-        />
-      </div>
-
-      <div className="space-y-1">
-        <label className="text-sm font-medium" htmlFor="mcp-desc">
-          Description <span className="text-muted-foreground">(optional)</span>
-        </label>
-        <Input
-          id="mcp-desc"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="What this server is used for"
-        />
-      </div>
 
       <div className="space-y-1">
         <label className="text-sm font-medium" htmlFor="mcp-url">
