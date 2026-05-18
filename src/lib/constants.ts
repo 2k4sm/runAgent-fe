@@ -25,7 +25,7 @@ export interface AgentMeta {
 /** Per-agent display metadata, keyed by the backend `agent` field. */
 export const AGENT_META: Record<string, AgentMeta> = {
   supervisor: {
-    label: 'Supervisor',
+    label: 'Agent',
     badgeClass: 'bg-primary/15 text-primary border-primary/30',
     description: 'Orchestrates and routes work to specialist agents',
   },
