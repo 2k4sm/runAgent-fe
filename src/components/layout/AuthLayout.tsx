@@ -5,7 +5,7 @@ import { Logo } from '@/components/common/Logo'
 /** Centered card shell for the login and signup pages. */
 export function AuthLayout() {
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center px-4">
+    <div className="bg-background flex min-h-dvh items-center justify-center px-4">
       <div className="absolute top-4 right-4">
         <ThemeToggle />
       </div>

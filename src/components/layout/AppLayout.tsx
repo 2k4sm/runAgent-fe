@@ -9,7 +9,7 @@ export function AppLayout() {
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen)
 
   return (
-    <div className="bg-background flex h-screen overflow-hidden">
+    <div className="bg-background flex h-dvh overflow-hidden">
       <Sidebar />
       {/* Mobile-only backdrop; tapping it dismisses the overlay sidebar. */}
       {sidebarOpen && (

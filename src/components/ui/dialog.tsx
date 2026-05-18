@@ -34,7 +34,7 @@ export function Dialog({
         />
         <BaseDialog.Popup
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100vh-2rem)] w-[calc(100vw-2rem)]',
+            'fixed top-1/2 left-1/2 z-50 flex max-h-[calc(100dvh-2rem)] w-[calc(100dvw-2rem)]',
             'max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col',
             'border-border bg-card text-card-foreground border shadow-lg outline-none',
             'data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',

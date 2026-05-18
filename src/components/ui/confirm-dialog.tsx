@@ -36,7 +36,7 @@ export function ConfirmDialog({
         />
         <AlertDialog.Popup
           className={cn(
-            'fixed top-1/2 left-1/2 z-50 w-[calc(100vw-2rem)] max-w-md -translate-x-1/2',
+            'fixed top-1/2 left-1/2 z-50 w-[calc(100dvw-2rem)] max-w-md -translate-x-1/2',
             'border-border bg-card text-card-foreground -translate-y-1/2 border p-6 shadow-lg',
             'data-[ending-style]:opacity-0 data-[starting-style]:opacity-0',
             'transition-opacity duration-150 outline-none',
