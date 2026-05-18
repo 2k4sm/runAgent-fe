@@ -72,8 +72,7 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
             key={item.id}
             item={item}
             streaming={streaming}
-            // An item is "active" while it is the latest thing received: still
-            // streaming, last in the list, and no final answer text yet.
+            // "active" = the latest item received: streaming, last, no answer text yet.
             active={streaming && idx === message.items.length - 1 && !message.content}
           />
         ))}

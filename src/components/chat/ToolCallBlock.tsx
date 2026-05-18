@@ -16,8 +16,7 @@ export function ToolCallBlock({ item }: { item: ChatItem }) {
   // MCP tool calls carry their server's favicon — show the real service icon.
   const toolIcon = typeof meta.tool_icon === 'string' ? meta.tool_icon : undefined
 
-  // Show the model-provided `task_summary` as the heading; fall back to the
-  // static label for older runs that lack it.
+  // Heading: the model-provided `task_summary`, or the static label for older runs.
   const summary =
     typeof args?.task_summary === 'string' && args.task_summary.trim() ? args.task_summary : label
 

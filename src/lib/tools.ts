@@ -47,11 +47,7 @@ interface ToolMeta {
   icon: LucideIcon
 }
 
-/**
- * Resolves display metadata for a tool. The primary heading comes from the
- * model-provided `task_summary` argument; this supplies the icon and a
- * fallback label for older runs that lack that arg.
- */
+/** Resolves a tool's icon and fallback label (the heading itself comes from `task_summary`). */
 export function toolMeta(toolName: string | undefined): ToolMeta {
   const def = toolName ? TOOL_DEFS[toolName] : undefined
   return {

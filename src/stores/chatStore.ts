@@ -77,10 +77,7 @@ function mergeGeneratedAsset(
   return [...current, asset]
 }
 
-/**
- * Appends text to a trailing `agent_response` item for `agent`, merging
- * consecutive deltas/blocks from the same agent into one collapsible block.
- */
+/** Appends text to a trailing `agent_response` item, merging same-agent deltas. */
 function appendAgentResponse(m: ChatMessage, agent: string, content: string): ChatMessage {
   const items = m.items.slice()
   const last = items[items.length - 1]
@@ -102,9 +99,7 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
 
   switch (type) {
     case 'chunk':
-      // Worker-agent text is intermediate output — route it into a per-agent
-      // collapsible block instead of the main answer body. Only the
-      // supervisor's text becomes the message content.
+      // Worker text is intermediate — route it into a per-agent collapsible block.
       if (agent && agent !== 'supervisor') {
         return appendAgentResponse(m, agent, content ?? '')
       }
@@ -301,9 +296,7 @@ function mapRuns(runs: PersistedRun[]): ChatMessage[] {
         })
         assistant = null
       } else if (entry.kind === 'message' && entry.role === 'assistant') {
-        // Back-compat: older runs persisted worker text as assistant message
-        // entries. Route non-supervisor ones into a collapsible block so they
-        // replay the same as the current `agent_response` event format.
+        // Back-compat: older runs persisted worker text as assistant messages.
         if (entry.agent && entry.agent !== 'supervisor') {
           updateAssistant((m) => appendAgentResponse(m, entry.agent!, entry.content ?? ''))
         } else {

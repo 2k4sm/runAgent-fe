@@ -6,15 +6,7 @@ import { agentMeta } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { ChatItem } from '@/types'
 
-/**
- * Collapsible block holding a worker agent's intermediate response. Keeps the
- * supervisor's final answer as the main message body while still surfacing
- * (and persisting) what each delegated agent produced.
- *
- * Auto-expands while it is the latest thing being received (`active`), then
- * collapses on its own once the next item arrives. The user can still toggle
- * it manually at any point.
- */
+/** Collapsible block for a worker agent's intermediate response; auto-open while `active`. */
 export function AgentResponseBlock({ item, active = false }: { item: ChatItem; active?: boolean }) {
   const meta = agentMeta(item.agent)
   const [open, setOpen] = useState(active)
