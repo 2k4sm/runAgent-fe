@@ -47,31 +47,40 @@ export function useChat() {
       const convStore = useConversationStore.getState()
       const chatStore = useChatStore.getState()
 
-      // 1. Resolve a conversation id — create one first if this is a new chat.
-      let conversationId = convStore.activeId
-      let isNew = false
-      if (!conversationId) {
+      // 1. Resolve a conversation id. For a new chat, generate it on the
+      //    client so the UI can render and route synchronously — nothing waits
+      //    on the create round-trip.
+      const isNew = !convStore.activeId
+      const conversationId = convStore.activeId ?? crypto.randomUUID()
+      // Name the conversation after the opening query (trimmed to a sensible
+      // length); fall back to the default for attachment-only sends.
+      const title = trimmed ? trimmed.replace(/\s+/g, ' ').slice(0, 60) : 'New conversation'
+
+      // 2. Render everything optimistically and instantly — before any await.
+      if (isNew) {
+        chatStore.setEmpty(conversationId) // marks `loaded` so ChatPage won't fetch
+        convStore.selectConversation(conversationId)
+        convStore.addLocalConversation(conversationId, title)
+        navigate(ROUTES.CHAT_BY_ID(conversationId))
+      }
+      chatStore.appendUserMessage(conversationId, trimmed, staged.map(optimisticAsset))
+      // Sets `streaming` → the thinking indicator shows immediately.
+      chatStore.startAssistantMessage(conversationId)
+
+      // 3. Persist the conversation row in the background (new chats only).
+      if (isNew) {
         try {
-          // Name the conversation after the opening query (trimmed to a
-          // sensible length); fall back to the default for attachment-only sends.
-          const title = trimmed ? trimmed.replace(/\s+/g, ' ').slice(0, 60) : undefined
-          const created = await convStore.createConversation(title)
-          conversationId = created.id
-          isNew = true
-          convStore.selectConversation(conversationId)
-          chatStore.setEmpty(conversationId)
-          navigate(ROUTES.CHAT_BY_ID(conversationId))
+          await convStore.createConversation(conversationId, title)
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Could not start a conversation')
+          const message = err instanceof Error ? err.message : 'Could not start a conversation'
+          toast.error(message)
+          useChatStore.getState().setStreamError(conversationId, message)
+          navigate(ROUTES.CHAT)
           return
         }
       }
 
-      // 2. Optimistically render the user message and an empty assistant turn.
-      chatStore.appendUserMessage(conversationId, trimmed, staged.map(optimisticAsset))
-      chatStore.startAssistantMessage(conversationId)
-
-      // 3. Ensure every attachment is stored. Re-upload anything that did not
+      // 4. Ensure every attachment is stored. Re-upload anything that did not
       //    finish (or failed) on attach — abort the send if one still cannot
       //    be stored, rather than silently dropping the file.
       let attachmentIds: string[]
@@ -90,7 +99,7 @@ export function useChat() {
         return
       }
 
-      // 4. POST the message.
+      // 5. POST the message.
       const controller = new AbortController()
       abortRef.current = controller
       let response: Response
@@ -114,7 +123,7 @@ export function useChat() {
         return
       }
 
-      // 5. Stream and apply events.
+      // 6. Stream and apply events.
       try {
         await readSSEStream(
           response,
@@ -132,15 +141,11 @@ export function useChat() {
         abortRef.current = null
       }
 
-      // 6. Refresh sidebar ordering. Runs are NOT refetched here — the
-      //    SSE-built messages stay in the store and the next turn appends to
-      //    them. Persisted runs are loaded only on first opening a
-      //    conversation (see ChatPage).
-      if (isNew) {
-        void useConversationStore.getState().loadConversations()
-      } else {
-        useConversationStore.getState().touchConversation(conversationId)
-      }
+      // 7. Move the conversation to the top of the sidebar. Nothing is
+      //    refetched from the backend — the frontend store already holds the
+      //    conversation (added optimistically) and the SSE-built messages;
+      //    persisted runs are loaded only on first opening a conversation.
+      useConversationStore.getState().touchConversation(conversationId)
     },
     [navigate],
   )

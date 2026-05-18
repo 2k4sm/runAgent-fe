@@ -3,8 +3,11 @@ import type { Conversation, PersistedRun } from '@/types'
 
 /** CRUD calls for conversations and their persisted runs. */
 export const conversationService = {
-  create(title?: string): Promise<Conversation> {
-    return apiPost<Conversation>('/conversations', { title: title || 'New conversation' })
+  create(title?: string, id?: string): Promise<Conversation> {
+    return apiPost<Conversation>('/conversations', {
+      title: title || 'New conversation',
+      ...(id ? { id } : {}),
+    })
   },
 
   list(): Promise<Conversation[]> {

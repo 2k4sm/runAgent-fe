@@ -50,7 +50,6 @@ function UserMessage({ message }: { message: ChatMessage }) {
 
 function AssistantMessage({ message }: { message: ChatMessage }) {
   const streaming = message.status === 'streaming'
-  const empty = !message.content && message.items.length === 0
 
   return (
     <div className="flex flex-col gap-1">
@@ -66,9 +65,11 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
             <Markdown content={message.content} />
             {streaming ? <StreamingCursor /> : null}
           </>
-        ) : streaming && empty ? (
-          <StreamingIndicator />
         ) : null}
+
+        {/* Keep a visible "working" signal for the whole turn — including the
+            gaps after a handoff while the next agent spins up. */}
+        {streaming ? <StreamingIndicator /> : null}
       </div>
 
       {message.generatedAssets?.length ? (

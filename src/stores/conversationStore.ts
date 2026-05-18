@@ -9,7 +9,10 @@ interface ConversationState {
   error: string | null
 
   loadConversations: () => Promise<void>
-  createConversation: (title?: string) => Promise<Conversation>
+  /** Synchronously add an optimistic conversation so it shows instantly. */
+  addLocalConversation: (id: string, title: string) => void
+  /** Persist a (client-id'd) conversation; rolls back the local entry on failure. */
+  createConversation: (id: string, title: string) => Promise<Conversation>
   selectConversation: (id: string | null) => void
   deleteConversation: (id: string) => Promise<void>
   /** Move a conversation to the top of the list (mirrors backend updated_at order). */
@@ -33,10 +36,32 @@ export const useConversationStore = create<ConversationState>((set, get) => ({
     }
   },
 
-  createConversation: async (title) => {
-    const conversation = await conversationService.create(title)
-    set({ conversations: [conversation, ...get().conversations] })
-    return conversation
+  addLocalConversation: (id, title) => {
+    if (get().conversations.some((c) => c.id === id)) return
+    const now = new Date().toISOString()
+    const optimistic: Conversation = {
+      id,
+      user_id: '',
+      title,
+      created_at: now,
+      updated_at: now,
+    }
+    set({ conversations: [optimistic, ...get().conversations] })
+  },
+
+  createConversation: async (id, title) => {
+    try {
+      const conversation = await conversationService.create(title, id)
+      // Replace the optimistic entry with the persisted row.
+      set({
+        conversations: get().conversations.map((c) => (c.id === id ? conversation : c)),
+      })
+      return conversation
+    } catch (err) {
+      // Roll back the optimistic entry so the sidebar stays accurate.
+      set({ conversations: get().conversations.filter((c) => c.id !== id) })
+      throw err
+    }
   },
 
   selectConversation: (activeId) => set({ activeId }),
