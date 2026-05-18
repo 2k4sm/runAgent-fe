@@ -1,4 +1,4 @@
-import { ChevronRight, Loader2 } from 'lucide-react'
+import { Check, ChevronRight, Loader2 } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { toolMeta } from '@/lib/tools'
 import type { ChatItem, ToolCallMeta } from '@/types'
@@ -38,8 +38,8 @@ export function ToolCallBlock({ item }: { item: ChatItem }) {
           <Icon className="text-muted-foreground size-3.5 shrink-0" />
         )}
         <span className="truncate font-medium">{summary}</span>
-        <span className="text-muted-foreground ml-auto shrink-0">
-          {pending ? 'running…' : 'done'}
+        <span className="text-muted-foreground ml-auto flex shrink-0 items-center">
+          {pending ? 'running…' : <Check className="size-3.5 text-emerald-500" />}
         </span>
         <ChevronRight className="size-3 shrink-0 transition-transform group-data-[panel-open]:rotate-90" />
       </CollapsibleTrigger>
