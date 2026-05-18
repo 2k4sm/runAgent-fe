@@ -227,6 +227,9 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
       return {
         ...m,
         status: 'error',
+        // The backend tags the error event with its run id so the failed run
+        // can be targeted for deletion on retry.
+        runId: (metadata?.run_id as string | undefined) ?? m.runId,
         items: [
           ...m.items,
           {
@@ -357,6 +360,7 @@ interface ChatState {
   applySSEEvent: (conversationId: string, event: SSEEvent) => void
   finishStreaming: (conversationId: string) => void
   setStreamError: (conversationId: string, message: string) => void
+  removeMessages: (conversationId: string, ids: string[]) => void
   reset: () => void
 }
 
@@ -459,6 +463,15 @@ export const useChatStore = create<ChatState>((set, get) => {
         items: [...m.items, { id: uid(), kind: 'error', content: message }],
       }))
       set({ streaming: false, statusText: null })
+    },
+
+    removeMessages: (conversationId, ids) => {
+      const drop = new Set(ids)
+      const list = get().messagesByConversation[conversationId] ?? []
+      setList(
+        conversationId,
+        list.filter((m) => !drop.has(m.id)),
+      )
     },
 
     reset: () =>

@@ -25,4 +25,9 @@ export const conversationService = {
   remove(id: string): Promise<{ status: string }> {
     return apiDelete<{ status: string }>(`/conversations/${id}`)
   },
+
+  /** Delete a single run — used to discard a failed run before retrying it. */
+  deleteRun(conversationId: string, runId: string): Promise<{ status: string }> {
+    return apiDelete<{ status: string }>(`/conversations/${conversationId}/runs/${runId}`)
+  },
 }

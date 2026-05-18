@@ -1,15 +1,20 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useChatStore } from '@/stores/chatStore'
 import { useConversationStore } from '@/stores/conversationStore'
 import { useUIStore } from '@/stores/uiStore'
 import { chatService } from '@/services/chatService'
+import { conversationService } from '@/services/conversationService'
 import { fileService } from '@/services/fileService'
 import { readSSEStream } from './useSSE'
 import { ApiError } from '@/services/api'
 import { ROUTES } from '@/lib/constants'
-import type { Asset, StagedFile } from '@/types'
+import type { Asset, ChatMessage, StagedFile } from '@/types'
+
+// Shared across every useChat() consumer so the Stop button can abort a run
+// started elsewhere (e.g. a Retry triggered from a message component).
+let activeController: AbortController | null = null
 
 /** Builds an optimistic Asset for a staged file so it renders immediately. */
 function optimisticAsset(staged: StagedFile): Asset {
@@ -36,10 +41,9 @@ function optimisticAsset(staged: StagedFile): Asset {
  */
 export function useChat() {
   const navigate = useNavigate()
-  const abortRef = useRef<AbortController | null>(null)
 
   const send = useCallback(
-    async (content: string, staged: StagedFile[] = []) => {
+    async (content: string, staged: StagedFile[] = [], retryAttachments?: Asset[]) => {
       const trimmed = content.trim()
       if (!trimmed && staged.length === 0) return
       if (useChatStore.getState().streaming) return
@@ -63,7 +67,11 @@ export function useChat() {
         convStore.addLocalConversation(conversationId, title)
         navigate(ROUTES.CHAT_BY_ID(conversationId))
       }
-      chatStore.appendUserMessage(conversationId, trimmed, staged.map(optimisticAsset))
+      chatStore.appendUserMessage(
+        conversationId,
+        trimmed,
+        retryAttachments ?? staged.map(optimisticAsset),
+      )
       // Sets `streaming` → the thinking indicator shows immediately.
       chatStore.startAssistantMessage(conversationId)
 
@@ -84,24 +92,29 @@ export function useChat() {
       //    finish (or failed) on attach — abort the send if one still cannot
       //    be stored, rather than silently dropping the file.
       let attachmentIds: string[]
-      try {
-        attachmentIds = await Promise.all(
-          staged.map(async (s) => {
-            if (s.status === 'uploaded' && s.assetId) return s.assetId
-            const asset = await fileService.upload(s.file)
-            return asset.id
-          }),
-        )
-      } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to upload an attachment'
-        toast.error(message)
-        useChatStore.getState().setStreamError(conversationId, message)
-        return
+      if (retryAttachments) {
+        // Retry: the attachments are already-uploaded assets — reuse their ids.
+        attachmentIds = retryAttachments.map((a) => a.id)
+      } else {
+        try {
+          attachmentIds = await Promise.all(
+            staged.map(async (s) => {
+              if (s.status === 'uploaded' && s.assetId) return s.assetId
+              const asset = await fileService.upload(s.file)
+              return asset.id
+            }),
+          )
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Failed to upload an attachment'
+          toast.error(message)
+          useChatStore.getState().setStreamError(conversationId, message)
+          return
+        }
       }
 
       // 5. POST the message.
       const controller = new AbortController()
-      abortRef.current = controller
+      activeController = controller
       let response: Response
       try {
         response = await chatService.sendMessage({
@@ -138,7 +151,7 @@ export function useChat() {
         }
       } finally {
         useChatStore.getState().finishStreaming(conversationId)
-        abortRef.current = null
+        activeController = null
       }
 
       // 7. Move the conversation to the top of the sidebar. Nothing is
@@ -151,11 +164,44 @@ export function useChat() {
   )
 
   const stop = useCallback(() => {
-    abortRef.current?.abort()
-    abortRef.current = null
+    activeController?.abort()
+    activeController = null
     const conversationId = useConversationStore.getState().activeId
     if (conversationId) useChatStore.getState().finishStreaming(conversationId)
   }, [])
 
-  return { send, stop }
+  /**
+   * Retry a failed assistant message: discard its failed run, then re-send the
+   * preceding user message (same text + attachments) as a fresh run.
+   */
+  const retry = useCallback(
+    async (message: ChatMessage) => {
+      if (useChatStore.getState().streaming) return
+      const conversationId = useConversationStore.getState().activeId
+      if (!conversationId) return
+
+      const list = useChatStore.getState().getMessages(conversationId)
+      const idx = list.findIndex((m) => m.id === message.id)
+      if (idx < 1) return
+      const userMsg = list[idx - 1]
+      if (userMsg.role !== 'user') return
+
+      // Discard the failed run server-side. A network-failure error may have
+      // no run id — then there is nothing to delete, just re-send.
+      if (message.runId) {
+        try {
+          await conversationService.deleteRun(conversationId, message.runId)
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : 'Could not discard the failed run')
+          return
+        }
+      }
+
+      useChatStore.getState().removeMessages(conversationId, [userMsg.id, message.id])
+      await send(userMsg.content, [], userMsg.attachments)
+    },
+    [send],
+  )
+
+  return { send, stop, retry }
 }

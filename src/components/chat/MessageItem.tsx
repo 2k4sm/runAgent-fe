@@ -1,5 +1,7 @@
-import { AlertCircle } from 'lucide-react'
+import { AlertCircle, RotateCcw } from 'lucide-react'
 import { Markdown } from '@/components/common/Markdown'
+import { useChat } from '@/hooks/useChat'
+import { useChatStore } from '@/stores/chatStore'
 import { AgentBadge } from './AgentBadge'
 import { ThoughtBlock } from './ThoughtBlock'
 import { ReasoningBlock } from './ReasoningBlock'
@@ -17,10 +19,14 @@ function ItemRenderer({
   item,
   streaming,
   active,
+  onRetry,
+  retryBusy,
 }: {
   item: ChatItem
   streaming: boolean
   active: boolean
+  onRetry: () => void
+  retryBusy: boolean
 }) {
   switch (item.kind) {
     case 'reasoning':
@@ -39,6 +45,15 @@ function ItemRenderer({
         <div className="border-destructive/40 bg-destructive/10 text-destructive my-2 flex items-start gap-2 border p-2 text-xs">
           <AlertCircle className="mt-0.5 size-3.5 shrink-0" />
           <span>{item.content}</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            disabled={retryBusy}
+            className="border-border bg-background text-foreground hover:bg-muted ml-auto flex shrink-0 items-center gap-1 self-start border px-1.5 py-0.5 disabled:opacity-50"
+          >
+            <RotateCcw className="size-3" />
+            Retry
+          </button>
         </div>
       )
     default:
@@ -61,6 +76,8 @@ function UserMessage({ message }: { message: ChatMessage }) {
 
 function AssistantMessage({ message }: { message: ChatMessage }) {
   const streaming = message.status === 'streaming'
+  const { retry } = useChat()
+  const busy = useChatStore((s) => s.streaming)
 
   return (
     <div className="flex flex-col gap-1">
@@ -74,6 +91,8 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
             streaming={streaming}
             // "active" = the latest item received: streaming, last, no answer text yet.
             active={streaming && idx === message.items.length - 1 && !message.content}
+            onRetry={() => void retry(message)}
+            retryBusy={busy}
           />
         ))}
 
