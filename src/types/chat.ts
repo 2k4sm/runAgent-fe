@@ -7,7 +7,6 @@ export type ChatRole = 'user' | 'assistant'
 export type ChatItemKind =
   | 'reasoning'
   | 'agent_response'
-  | 'thought'
   | 'tool_call'
   | 'tool_result'
   | 'handoff'

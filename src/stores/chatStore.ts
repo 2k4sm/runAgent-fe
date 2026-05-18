@@ -129,26 +129,6 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
       return { ...m, items }
     }
 
-    case 'thought': {
-      const items = m.items.slice()
-      const last = items[items.length - 1]
-      // Merge consecutive thoughts from the same agent.
-      if (last && last.kind === 'thought' && last.agent === (agent ?? undefined)) {
-        items[items.length - 1] = {
-          ...last,
-          content: `${last.content}\n${content ?? ''}`.trim(),
-        }
-      } else {
-        items.push({
-          id: uid(),
-          kind: 'thought',
-          agent: agent ?? undefined,
-          content: content ?? '',
-        })
-      }
-      return { ...m, items }
-    }
-
     case 'tool_call': {
       const meta = (metadata ?? {}) as Partial<ToolCallMeta>
       return {

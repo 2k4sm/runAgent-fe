@@ -3,7 +3,6 @@ import { Markdown } from '@/components/common/Markdown'
 import { useChat } from '@/hooks/useChat'
 import { useChatStore } from '@/stores/chatStore'
 import { AgentBadge } from './AgentBadge'
-import { ThoughtBlock } from './ThoughtBlock'
 import { ReasoningBlock } from './ReasoningBlock'
 import { AgentResponseBlock } from './AgentResponseBlock'
 import { ToolCallBlock } from './ToolCallBlock'
@@ -33,8 +32,6 @@ function ItemRenderer({
       return <ReasoningBlock item={item} streaming={streaming} />
     case 'agent_response':
       return <AgentResponseBlock item={item} active={active} />
-    case 'thought':
-      return <ThoughtBlock item={item} />
     case 'tool_call':
     case 'tool_result':
       return <ToolCallBlock item={item} />
