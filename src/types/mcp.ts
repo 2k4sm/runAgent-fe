@@ -20,6 +20,8 @@ export interface MCPServer {
   enabled: boolean
   status: MCPServerStatus
   status_detail?: string | null
+  /** Live favicon URL for the server's domain. */
+  icon_url?: string | null
   tools: MCPToolInfo[]
   created_at?: string | null
 }

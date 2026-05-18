@@ -52,6 +52,11 @@ function ServerRow({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
+            {server.icon_url ? (
+              <img src={server.icon_url} alt="" className="size-4 shrink-0 rounded-sm" />
+            ) : (
+              <Plug className="text-muted-foreground size-4 shrink-0" />
+            )}
             <span className="truncate text-sm font-medium">{server.name}</span>
             <StatusBadge status={server.status} />
           </div>

@@ -18,6 +18,8 @@ export interface ToolCallMeta {
   tool_name: string
   tool_args: Record<string, unknown>
   tool_call_id: string
+  /** Live favicon URL for the owning MCP server, when applicable. */
+  tool_icon?: string
 }
 
 export interface ToolResultMeta {
