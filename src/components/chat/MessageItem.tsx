@@ -13,12 +13,20 @@ import { UsageFooter } from './UsageFooter'
 import { cn } from '@/lib/utils'
 import type { ChatItem, ChatMessage } from '@/types'
 
-function ItemRenderer({ item, streaming }: { item: ChatItem; streaming: boolean }) {
+function ItemRenderer({
+  item,
+  streaming,
+  active,
+}: {
+  item: ChatItem
+  streaming: boolean
+  active: boolean
+}) {
   switch (item.kind) {
     case 'reasoning':
       return <ReasoningBlock item={item} streaming={streaming} />
     case 'agent_response':
-      return <AgentResponseBlock item={item} />
+      return <AgentResponseBlock item={item} active={active} />
     case 'thought':
       return <ThoughtBlock item={item} />
     case 'tool_call':
@@ -59,8 +67,15 @@ function AssistantMessage({ message }: { message: ChatMessage }) {
       <AgentBadge agent={message.agent} className="self-start" />
 
       <div className="text-sm">
-        {message.items.map((item) => (
-          <ItemRenderer key={item.id} item={item} streaming={streaming} />
+        {message.items.map((item, idx) => (
+          <ItemRenderer
+            key={item.id}
+            item={item}
+            streaming={streaming}
+            // An item is "active" while it is the latest thing received: still
+            // streaming, last in the list, and no final answer text yet.
+            active={streaming && idx === message.items.length - 1 && !message.content}
+          />
         ))}
 
         {message.content ? (

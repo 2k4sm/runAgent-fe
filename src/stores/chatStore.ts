@@ -188,6 +188,14 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
           return { ...m, items, generatedAssets }
         }
       }
+
+      const toolName = meta.tool_name
+      const isAgentDelegation =
+        Boolean((metadata as Record<string, unknown> | null)?.worker) ||
+        (typeof toolName === 'string' && toolName.endsWith('_agent'))
+      if (isAgentDelegation) {
+        return { ...m, generatedAssets }
+      }
       // No matching call — render the result standalone.
       items.push({
         id: uid(),
