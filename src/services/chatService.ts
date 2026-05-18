@@ -42,6 +42,9 @@ export const chatService = {
         conversation_id: conversationId,
         attachment_ids: attachmentIds ?? [],
         reasoning: reasoning ?? false,
+        // The user's IANA timezone (e.g. "America/New_York") so every agent
+        // reasons with the user's current local date and time.
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
     })
