@@ -49,8 +49,19 @@ export const useMCPStore = create<MCPState>((set, get) => ({
   },
 
   updateServer: async (id, input) => {
-    const server = await mcpService.update(id, input)
-    set({ servers: upsert(get().servers, server) })
+    const previous = get().servers
+    // Optimistic: apply the change immediately (e.g. the enabled toggle flips
+    // instantly), then reconcile with the server response or roll back.
+    set({
+      servers: previous.map((s) => (s.id === id ? { ...s, ...input } : s)),
+    })
+    try {
+      const server = await mcpService.update(id, input)
+      set({ servers: upsert(get().servers, server) })
+    } catch (err) {
+      set({ servers: previous })
+      throw err
+    }
   },
 
   removeServer: async (id) => {

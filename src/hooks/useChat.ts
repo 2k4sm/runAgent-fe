@@ -186,18 +186,21 @@ export function useChat() {
       const userMsg = list[idx - 1]
       if (userMsg.role !== 'user') return
 
-      // Discard the failed run server-side. A network-failure error may have
-      // no run id — then there is nothing to delete, just re-send.
+      // Optimistic: drop the failed pair and re-send immediately — `send`
+      // renders the new user message + thinking indicator synchronously, so
+      // the retry is visually instant with no wait on the network.
+      useChatStore.getState().removeMessages(conversationId, [userMsg.id, message.id])
+
+      // Discard the failed run server-side as best-effort background cleanup —
+      // never block the retry on it. A network-failure error may have no run
+      // id, in which case there is nothing to delete. A lingering failed run
+      // is harmless (it is excluded from LLM history).
       if (message.runId) {
-        try {
-          await conversationService.deleteRun(conversationId, message.runId)
-        } catch (err) {
+        conversationService.deleteRun(conversationId, message.runId).catch((err) => {
           toast.error(err instanceof Error ? err.message : 'Could not discard the failed run')
-          return
-        }
+        })
       }
 
-      useChatStore.getState().removeMessages(conversationId, [userMsg.id, message.id])
       await send(userMsg.content, [], userMsg.attachments)
     },
     [send],
