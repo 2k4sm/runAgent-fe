@@ -24,11 +24,14 @@ export interface ToolCallMeta {
 
 export interface ToolResultMeta {
   tool_name: string
+  tool_call_id?: string
 }
 
 export interface HandoffMeta {
   target_agent: AgentName
   task: string
+  /** For MCP handoffs: the connected server's name, shown in place of "Mcp". */
+  server_name?: string
 }
 
 export interface UsageMeta {

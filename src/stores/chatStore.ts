@@ -175,10 +175,15 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
       // surface it as a download chip immediately, live from the stream.
       const generatedAssets = mergeGeneratedAsset(m.generatedAssets, content)
       const items = m.items.slice()
-      // Match the most recent unresolved tool_call with the same tool name.
+      // Match by tool_call_id (exact — required when calls run in parallel),
+      // falling back to the most recent unresolved call with the same name.
       for (let i = items.length - 1; i >= 0; i--) {
         const it = items[i]
-        if (it.kind === 'tool_call' && !it.resolved && it.toolName === meta.tool_name) {
+        if (it.kind !== 'tool_call' || it.resolved) continue
+        const matches = meta.tool_call_id
+          ? it.toolCallId === meta.tool_call_id
+          : it.toolName === meta.tool_name
+        if (matches) {
           items[i] = { ...it, resolved: true, result: content ?? '' }
           return { ...m, items, generatedAssets }
         }
