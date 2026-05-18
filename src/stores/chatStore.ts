@@ -78,6 +78,21 @@ function mergeGeneratedAsset(
 }
 
 /**
+ * Appends text to a trailing `agent_response` item for `agent`, merging
+ * consecutive deltas/blocks from the same agent into one collapsible block.
+ */
+function appendAgentResponse(m: ChatMessage, agent: string, content: string): ChatMessage {
+  const items = m.items.slice()
+  const last = items[items.length - 1]
+  if (last && last.kind === 'agent_response' && last.agent === agent) {
+    items[items.length - 1] = { ...last, content: last.content + content }
+  } else {
+    items.push({ id: uid(), kind: 'agent_response', agent, content })
+  }
+  return { ...m, items }
+}
+
+/**
  * Applies one event to an assistant message, returning the updated copy.
  * Shared by the live stream (`applySSEEvent`) and run replay (`mapRuns`) so
  * both reconstruct thoughts, tool calls and handoffs identically.
@@ -87,7 +102,17 @@ function applyEventToMessage(m: ChatMessage, event: EventLike): ChatMessage {
 
   switch (type) {
     case 'chunk':
+      // Worker-agent text is intermediate output — route it into a per-agent
+      // collapsible block instead of the main answer body. Only the
+      // supervisor's text becomes the message content.
+      if (agent && agent !== 'supervisor') {
+        return appendAgentResponse(m, agent, content ?? '')
+      }
       return { ...m, agent: agent || m.agent, content: m.content + (content ?? '') }
+
+    case 'agent_response':
+      // Replayed worker response from a persisted run timeline.
+      return appendAgentResponse(m, agent ?? 'agent', content ?? '')
 
     case 'reasoning': {
       const items = m.items.slice()
@@ -268,14 +293,21 @@ function mapRuns(runs: PersistedRun[]): ChatMessage[] {
         })
         assistant = null
       } else if (entry.kind === 'message' && entry.role === 'assistant') {
-        // Generated-file chips are reconstructed from the replayed `tool_result`
-        // events below (same path as the live stream), so `...m` carries them.
-        updateAssistant((m) => ({
-          ...m,
-          agent: entry.agent ?? m.agent,
-          content: entry.content ?? m.content,
-          status: m.status === 'error' ? 'error' : 'complete',
-        }))
+        // Back-compat: older runs persisted worker text as assistant message
+        // entries. Route non-supervisor ones into a collapsible block so they
+        // replay the same as the current `agent_response` event format.
+        if (entry.agent && entry.agent !== 'supervisor') {
+          updateAssistant((m) => appendAgentResponse(m, entry.agent!, entry.content ?? ''))
+        } else {
+          // Generated-file chips are reconstructed from the replayed
+          // `tool_result` events below, so `...m` carries them.
+          updateAssistant((m) => ({
+            ...m,
+            agent: entry.agent ?? m.agent,
+            content: entry.content ?? m.content,
+            status: m.status === 'error' ? 'error' : 'complete',
+          }))
+        }
       } else if (entry.kind === 'event' && entry.type) {
         // Final text comes from the assistant message entry; skip chunk text.
         if (entry.type === 'chunk' || entry.type === 'status') continue

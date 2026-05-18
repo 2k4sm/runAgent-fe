@@ -3,6 +3,7 @@ import { Markdown } from '@/components/common/Markdown'
 import { AgentBadge } from './AgentBadge'
 import { ThoughtBlock } from './ThoughtBlock'
 import { ReasoningBlock } from './ReasoningBlock'
+import { AgentResponseBlock } from './AgentResponseBlock'
 import { ToolCallBlock } from './ToolCallBlock'
 import { HandoffDivider } from './HandoffDivider'
 import { StreamingIndicator } from './StreamingIndicator'
@@ -16,6 +17,8 @@ function ItemRenderer({ item, streaming }: { item: ChatItem; streaming: boolean 
   switch (item.kind) {
     case 'reasoning':
       return <ReasoningBlock item={item} streaming={streaming} />
+    case 'agent_response':
+      return <AgentResponseBlock item={item} />
     case 'thought':
       return <ThoughtBlock item={item} />
     case 'tool_call':

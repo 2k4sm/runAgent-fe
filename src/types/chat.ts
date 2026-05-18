@@ -6,6 +6,7 @@ export type ChatRole = 'user' | 'assistant'
 /** Kinds of inline items that interleave within an assistant turn. */
 export type ChatItemKind =
   | 'reasoning'
+  | 'agent_response'
   | 'thought'
   | 'tool_call'
   | 'tool_result'
