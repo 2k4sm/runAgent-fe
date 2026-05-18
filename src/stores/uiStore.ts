@@ -26,18 +26,21 @@ interface UIState {
   theme: Theme
   sidebarOpen: boolean
   reasoningEnabled: boolean
+  mcpModalOpen: boolean
   setTheme: (theme: Theme) => void
   toggleTheme: () => void
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
   setReasoningEnabled: (enabled: boolean) => void
   toggleReasoning: () => void
+  setMcpModalOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set, get) => ({
   theme: getInitialTheme(),
   sidebarOpen: true,
   reasoningEnabled: getInitialReasoning(),
+  mcpModalOpen: false,
 
   setTheme: (theme) => {
     localStorage.setItem(THEME_KEY, theme)
@@ -57,4 +60,6 @@ export const useUIStore = create<UIState>((set, get) => ({
   toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
 
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+
+  setMcpModalOpen: (mcpModalOpen) => set({ mcpModalOpen }),
 }))

@@ -147,5 +147,8 @@ export const apiGet = <T>(path: string, signal?: AbortSignal) =>
 export const apiPost = <T>(path: string, body?: unknown, signal?: AbortSignal) =>
   request<T>(path, { method: 'POST', body, signal })
 
+export const apiPatch = <T>(path: string, body?: unknown, signal?: AbortSignal) =>
+  request<T>(path, { method: 'PATCH', body, signal })
+
 export const apiDelete = <T>(path: string, signal?: AbortSignal) =>
   request<T>(path, { method: 'DELETE', signal })

@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '@/components/sidebar/Sidebar'
+import { MCPModal } from '@/components/mcp/MCPModal'
 import { useUIStore } from '@/stores/uiStore'
 
 /** Main authenticated shell: conversation sidebar + routed content. */
@@ -21,6 +22,7 @@ export function AppLayout() {
       <main className="flex min-w-0 flex-1 flex-col">
         <Outlet />
       </main>
+      <MCPModal />
     </div>
   )
 }

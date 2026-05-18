@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Brain, Paperclip, Send, Square } from 'lucide-react'
+import { Brain, Paperclip, Plug, Send, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
@@ -22,6 +22,7 @@ export function ChatInput() {
   const streaming = useChatStore((s) => s.streaming)
   const reasoningEnabled = useUIStore((s) => s.reasoningEnabled)
   const toggleReasoning = useUIStore((s) => s.toggleReasoning)
+  const openMcpModal = useUIStore((s) => s.setMcpModalOpen)
   const [content, setContent] = useState('')
   const [staged, setStaged] = useState<StagedFile[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -155,6 +156,18 @@ export function ChatInput() {
               aria-pressed={reasoningEnabled}
             >
               <Brain />
+            </Button>
+          </Tooltip>
+
+          <Tooltip content="MCP servers">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-8 shrink-0"
+              onClick={() => openMcpModal(true)}
+              aria-label="Manage MCP servers"
+            >
+              <Plug />
             </Button>
           </Tooltip>
 
