@@ -12,7 +12,7 @@ interface MCPState {
   addServer: (input: MCPServerCreateInput) => Promise<MCPServer>
   updateServer: (id: string, input: MCPServerUpdateInput) => Promise<void>
   removeServer: (id: string) => Promise<void>
-  testServer: (id: string) => Promise<void>
+  testServer: (id: string) => Promise<MCPServer>
   /** Begin the OAuth flow: opens the provider's consent screen in a popup. */
   startOAuth: (id: string) => Promise<void>
 }
@@ -78,6 +78,7 @@ export const useMCPStore = create<MCPState>((set, get) => ({
   testServer: async (id) => {
     const server = await mcpService.test(id)
     set({ servers: upsert(get().servers, server) })
+    return server
   },
 
   startOAuth: async (id) => {

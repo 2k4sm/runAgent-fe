@@ -58,21 +58,23 @@ function ServerRow({
               <Plug className="text-muted-foreground size-4 shrink-0" />
             )}
             <span className="truncate text-sm font-medium">{server.name}</span>
-            <StatusBadge status={server.status} />
           </div>
           <p className="text-muted-foreground mt-0.5 truncate text-xs">{server.url}</p>
           {server.description ? (
             <p className="text-muted-foreground mt-0.5 truncate text-xs">{server.description}</p>
           ) : null}
         </div>
-        <button
-          type="button"
-          onClick={() => onRequestDelete(server)}
-          aria-label={`Remove ${server.name}`}
-          className="text-muted-foreground hover:text-destructive shrink-0"
-        >
-          <Trash2 className="size-4" />
-        </button>
+        <div className="flex shrink-0 items-center gap-2">
+          <StatusBadge status={server.status} />
+          <button
+            type="button"
+            onClick={() => onRequestDelete(server)}
+            aria-label={`Remove ${server.name}`}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
       </div>
 
       {server.status === 'error' && server.status_detail ? (
@@ -100,10 +102,20 @@ function ServerRow({
           size="sm"
           variant="outline"
           disabled={busy}
-          onClick={() => run(() => testServer(server.id), 'Connection test failed')}
+          onClick={() =>
+            run(async () => {
+              const updated = await testServer(server.id)
+              if (updated.status === 'connected') {
+                const n = updated.tools.length
+                toast.success(`${updated.name} updated — ${n} tool${n === 1 ? '' : 's'} available`)
+              } else {
+                toast.error(updated.status_detail || `${updated.name} is ${updated.status}`)
+              }
+            }, 'Could not refresh server')
+          }
         >
           <RefreshCw className={cn('size-3.5', busy && 'animate-spin')} />
-          Test
+          Refresh
         </Button>
         <Button
           size="sm"
@@ -340,7 +352,7 @@ export function MCPModal() {
         open={open}
         onOpenChange={setOpen}
         title="MCP servers"
-        description="Connect Model Context Protocol servers to give the agent more tools."
+        description="Connect MCP servers to give the agent more capabilities."
       >
         {view === 'add' ? (
           <AddServerForm onCancel={() => setView('list')} />
